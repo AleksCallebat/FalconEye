@@ -46,42 +46,50 @@ def draw(image,box,text):
     #dessine le rectangle
     cv2.rectangle(img,a,b,c,d)
     #écriture du texte. Le +20 est là pour décaler le texte de la ligne blanche
-    cv2.putText(image,text,org=(a[0],a[1]+20), fontFace=2,fontScale=0.3,color=(250,250,250))
-
-    cv2.imshow('image',img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    cv2.putText(img,text,org=(a[0],a[1]+20), fontFace=2,fontScale=0.3,color=(250,250,250))
+    print("image error",img)
+    cv2.imshow('image',image)
+   # cv2.waitKey(0)
+   # cv2.destroyAllWindows()
 
 def process_image(image,threshold=0.1):
     # fait le processing d'une image en faisant l'appel et le dessin
     # threshold : seuil de sensibilité pour détecter un objet
 
-    height, width, channels = cv2.imread(path).shape
+    height, width, channels = image.shape
     # Complexe because conversion from cv2 format to binary
     predictions=api_call(cv2.imencode('.jpg', image)[1].tostring())["predictions"]
     boxes=[item["boundingBox"] for item in predictions if item["probability"]>threshold]
     items=[item["tagName"] for item in predictions if item["probability"]>threshold]
-    image=cv2.imread(path)
+    #image=cv2.imread(path)
     print(predictions)
     for k in range(len(boxes)):
         box=boxes[k]    
         text=items[k]
         draw(image,((int(box["left"]*width),int(box["top"]*height)),(int((box["left"]+box["width"])*width),int((box["top"]+box["height"])*height)),(255,255,255),3),text)
 
-process_image(cv2.imread(path))
+#process_image(cv2.imread(path))
 
 def read_video(path):
     # TODO : processer les images sur toute une vidéo
-    cap = cv2.VideoCapture('vtest.avi')
+    cap = cv2.VideoCapture(path)
 
+    count=0
     while(cap.isOpened()):
         ret, frame = cap.read()
-
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-        cv2.imshow('frame',gray)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        if count<2600:
+            #print("wainting to start")
+            count+=1
+        elif count>2650:
             break
+        else:
+            count+=1
+            process_image(frame)
+#            draw(frame,((0,0),(300,300),(250,250,250),3),"hello world")
+            #cv2.imshow('frame',gray)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
 
     cap.release()
     cv2.destroyAllWindows()
+read_video("videos/falcon.mp4")
